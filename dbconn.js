@@ -14,5 +14,10 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 
 const User = require('./models/userModel')(sequelize, DataTypes);
+const Course = require('./models/courseModel')(sequelize, DataTypes);
+const Category = require('./models/categoryModel')(sequelize, DataTypes);
+const CourseContent = require('./models/courseContentModel')(sequelize, DataTypes);
+const Enrollment = require('./models/enrollmentModel')(sequelize, DataTypes);
+const Payment = require('./models/payementModel')(sequelize, DataTypes);
 
-module.exports = {sequelize,User};
+module.exports = {sequelize,User,Course,Category,CourseContent,Enrollment,Payment};

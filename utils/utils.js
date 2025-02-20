@@ -26,7 +26,8 @@ function isInstructor(req, res, next) {
         res.status(401).send({ message: "Invalid token" });
       } else {
         req.user = decode;
-        if(user.role=='instructor'){
+        console.log("intructor",req.user)
+        if(req.user.role == 'instructor'){
           next();
         }else{
           res.status(403).send({ message: "You are not an instructor" });
@@ -38,4 +39,4 @@ function isInstructor(req, res, next) {
   }
 }
 
-module.exports = isAuth;
+module.exports = {isAuth,isInstructor};

@@ -13,8 +13,8 @@ function generateToken(user) {
         {
             id: user.id,
             name: user.full_name,
-            name: user.name,
-            email: user.email
+            email: user.email,
+            role: user.role,
         },
         process.env.JWT_SECRET,
         {
@@ -37,11 +37,14 @@ const loginController = async (req, res) => {
         if (!req.body.email || !req.body.password) {
             res.status(401).json({ message: "empty request body " });
         } else {
+
+            console.log("email ", req.body.email, req.body.password)
             const user = await User.findOne({ where: { email: req.body.email } });
             if (user) {
                 if (req.body.password == user.password) {
                     res.status(200).json({
                         user: {
+                            id: user.id,
                             name: user.full_name,
                             email: user.email,
                             role: user.role,

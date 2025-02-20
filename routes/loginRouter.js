@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /login:
+ * /api/login:
  *   post:
  *     summary: User login
  *     description: Authenticates a user and returns an access token.
@@ -58,7 +58,7 @@
 
 /**
  * @swagger
- * /login/check-token:
+ * /api/login/check-token:
  *   get:
  *     summary: Check token authenticity
  *     description: Validates if the provided token in the Authorization header is authentic.
@@ -95,15 +95,15 @@
 const express = require('express');
 const { body } = require("express-validator");
 const asyncHandler = require("express-async-handler");
-const isAuth = require('../utils/utils');
+const {isAuth} = require('../utils/utils');
 const { loginController, checkTokenAuthenticity } = require('../controllers/loginController')
 
 const loginRouter = express.Router();
 loginRouter.post(
     "/",
     [
-        body("email").isEmail().normalizeEmail(),
-        body("password").isString().trim(),
+        body("email").isEmail(),
+        body("password").isString(),
     ],
     asyncHandler(loginController)
 );
@@ -111,4 +111,4 @@ loginRouter.post(
 loginRouter.get("/check-token", isAuth, checkTokenAuthenticity);
 
 
-module.exports ={loginRouter};
+module.exports =loginRouter;

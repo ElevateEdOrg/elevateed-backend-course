@@ -5,7 +5,8 @@ const path = require("path");
 const app = express();
 
 const { specs, swaggerUi } = require('./swagger');
-const {loginRouter}=require('./routes/loginRouter')
+const loginRouter=require('./routes/loginRouter')
+const courseRouter= require('./routes/courseRouter')
 const cors = require("cors");
 
 const PORT = process.env.PORT || 8000;
@@ -40,7 +41,9 @@ app.use('/', require('./routes/rootRouter'))
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 
 
-app.use('/login',loginRouter)
+app.use('/api/login',loginRouter);
+
+app.use('/api/courses', courseRouter);
 
 
 // app.all("*", (req, res) => {
