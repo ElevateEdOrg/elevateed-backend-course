@@ -1,31 +1,17 @@
 require("dotenv").config();
 const express = require("express");
-
-const mongoose = require("mongoose");
+const { sequelize } = require('./dbconn')
 const path = require("path");
 const app = express();
 
 const { specs, swaggerUi } = require('./swagger');
-
-
+const {loginRouter}=require('./routes/loginRouter')
 const cors = require("cors");
 
 const PORT = process.env.PORT || 8000;
 const date = new Date();
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then((data) => {
-    console.log("DB connected successfully");
-    app.listen(PORT, (err) => {
-      err
-        ? console.log(err)
-        : console.log("server running " + ` http://localhost:` + PORT + "/");
-    });
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+
 app.all("*", (req, res, next) => {
   const date = new Date();
   console.log(
@@ -49,14 +35,32 @@ app.all("*", (req, res, next) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use('/', require('./routes/rootRouter'))
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 
-app.all("*", (req, res) => {
-  res.status(404).json({ message: '404 invalid api endpoint used' })
-})
 
+app.use('/login',loginRouter)
+
+
+// app.all("*", (req, res) => {
+//   res.status(404).json({ message: '404 invalid api endpoint used' })
+// })
+
+
+sequelize.sync()
+  .then(() => {
+
+    console.log(`postgres connected successfully`)
+    app.listen(PORT, (err) => {
+      err
+        ? console.log(err)
+        : console.log("server running " + ` http://localhost:` + PORT + "/");
+    });
+  })
+  .catch(err => {
+    console.error('Unable to start server:', err);
+  });
 
 
 

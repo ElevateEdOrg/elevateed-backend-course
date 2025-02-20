@@ -1,7 +1,5 @@
 require('dotenv').config();
 const { Sequelize , DataTypes } = require('sequelize');
-
-
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
   host: process.env.DB_HOST, // e.g., 'localhost'
   dialect: 'postgres',
@@ -15,11 +13,6 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   }
 });
 
-// Import model definitions
-const Customer = require('./models/customers')(sequelize, DataTypes);
-const Product = require('./models/products')(sequelize, DataTypes);
-const Order = require('./models/orders')(sequelize, DataTypes);
-const OrderItem = require('./models/orderitems')(sequelize, DataTypes);
-const Payment = require('./models/payments')(sequelize, DataTypes);
+const User = require('./models/userModel')(sequelize, DataTypes);
 
-module.exports = {sequelize,Customer,Product,Order,OrderItem,Payment};
+module.exports = {sequelize,User};
