@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  db:
+    image: elevatewappnet/postgresdb:latest  # Use the public Docker Hub image
+    container_name: elevate_postgres
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  app:
+    build: .
+    container_name: elevate_node_course
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: ["/bin/sh", "-c", "sleep 5 && node server.js"]
+
+volumes:
+  pgdata:
