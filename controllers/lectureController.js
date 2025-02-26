@@ -8,7 +8,7 @@ const UploadLectureFiles = async (req, res) => {
   try {
     const files = req.files;
     if (!files || !files.video_path) return res.status(403).json({ message: "Please Upload Lecture Video" });
-    // Step 1: Upload Banner Image (if provided)
+    // Step 1: Upload lecture video 
     let video_path = null;
     if (files.video_path.length > 0) {
       video_path = await uploadFileToS3(files.video_path[0]);
@@ -25,32 +25,36 @@ const UploadLectureFiles = async (req, res) => {
   }
 }
 
-const LectureCreationController = async (req, res) => {
+const createLecture = async (req, res) => {
   try {
-    const { title, description, price, category_id, welcome_msg, banner_image, intro_video } = req.body;
-    const instructor_id = req.user.id;
-    // Validate required fields
-    if (!title || !price || !category_id || !description || !welcome_msg || !banner_image || !intro_video) {
-      return res.status(403).json({ message: "Missing required fields" });
+    const { course_id, title, description, video_path } = req.body;
+
+    // Validate input
+    if (!course_id || !title || !description || !video_path) {
+      return res.status(403).json({ message: "missing fields" });
     }
-    // Step 3: Create Course in Database
-    const newCourse = await db.Course.create({
+
+    // Check if the course exists
+    const course = await db.Course.findByPk(course_id);
+    if (!course) {
+      return res.status(403).json({ message: "Course not found." });
+    }
+
+    // Create the lecture
+    const newLecture = await db.Lecture.create({
+      course_id,
       title,
       description,
-      instructor_id,
-      category_id,
-      price,
-      banner_image,
-      welcome_msg,
-      intro_video
+      video_path,
+      pdf_path:req.pdf_path?req.pdf_path:null,
     });
-    return res.status(201).json({ message: "Course created successfully", data: newCourse });
+
+    res.status(201).json({ message: "Lecture created successfully.", data: newLecture });
   } catch (error) {
-    console.error("Error creating course:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error creating lecture:", error);
+    res.status(500).json({ message: "Internal server error." });
   }
 };
-
 
 
 
@@ -77,4 +81,4 @@ const getAllLectures = async (req, res) => {
 
 
 
-module.exports = {UploadLectureFiles};
+module.exports = {UploadLectureFiles,createLecture};

@@ -49,6 +49,10 @@ module.exports = (sequelize, DataTypes) => {
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     }
   }, {
     tableName: 'courses',
@@ -63,7 +67,7 @@ module.exports = (sequelize, DataTypes) => {
     Course.belongsTo(models.User, { foreignKey: 'instructor_id', as: 'Instructor' });
 
     // Many-to-Many relationship between Users (Students) and Courses via Enrollment
-    Course.belongsToMany(models.User, { through: models.Enrollment, foreignKey: 'course_id', as: 'EnrolledStudents' });
+    Course.belongsToMany(models.User, { through: models.Enrollment, foreignKey: "course_id", as: "EnrolledStudents" });
 
     // One-to-Many relationship with Lectures
     Course.hasMany(models.Lecture, { foreignKey: 'course_id', as: 'Lectures', onDelete: 'CASCADE' });

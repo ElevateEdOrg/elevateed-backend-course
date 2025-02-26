@@ -39,4 +39,29 @@ const uploadFileToS3 = async (file) => {
   return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
 }
 
-module.exports = {uploadFileToS3};
+const deleteFilesFromS3 = async (fileUrls) => {
+  try {
+    if (!fileUrls || fileUrls.length === 0) throw new Error("no files provided");
+
+    const deletePromises = fileUrls
+      .filter((url) => url) // Ensure non-null URLs
+      .map((url) => {
+        const key = url.split(".com/")[1]; // Extract key from URL
+
+        const params = {
+          Bucket: BUCKET_NAME,
+          Key: key,
+        };
+
+        return s3.send(new DeleteObjectCommand(params));
+      });
+
+    await Promise.all(deletePromises);
+    console.log("Files deleted successfully from S3.");
+    return `files deleted successfully`;
+  } catch (error) {
+    console.error("Error deleting files from S3:", error);
+  }
+};
+
+module.exports = { uploadFileToS3, deleteFilesFromS3 };

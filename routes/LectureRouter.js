@@ -5,7 +5,7 @@ const { upload } = require('../config/multer/multer')
 const asyncHandler = require("express-async-handler");
 const { authenticate } = require('../utils/utils');
 
-const { UploadLectureFiles} = require('../controllers/lectureController')
+const { UploadLectureFiles ,createLecture} = require('../controllers/lectureController')
 
 const lectureRouter = express.Router();
 
@@ -13,7 +13,7 @@ const lectureRouter = express.Router();
 
 // courseRouter.post('/getcourses', authenticate(["instructor", "student"]), asyncHandler(getAllUsersCourses))
 
-// courseRouter.post('/createcourse', authenticate(["instructor"]), asyncHandler(courseCreationController));
+lectureRouter.post('/createlecture', authenticate(["instructor"]), asyncHandler(createLecture));
 
 lectureRouter.post('/upload', authenticate(['instructor']), upload.fields([
     { name: "video_path", maxCount: 1 }, // Single banner image

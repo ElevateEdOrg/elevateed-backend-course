@@ -46,7 +46,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 app.use('/api/login', loginRouter);
 
 app.use('/api/courses', courseRouter);
-app.use('/api/lecture', lectureRouter);
+app.use('/api/courses/lectures', lectureRouter);
 app.use('/api/courses/categories', categoryRouter);
 
 app.use((err, req, res, next) => {

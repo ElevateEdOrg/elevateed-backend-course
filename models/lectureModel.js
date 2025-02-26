@@ -20,12 +20,14 @@ module.exports = (sequelize, DataTypes) => {
         },
         description: {
             type: DataTypes.TEXT,
+            allowNull: false,
         },
         video_path: {
             type: DataTypes.TEXT,
+            allowNull: false,
         },
         pdf_path: {
-            type: DataTypes.TEXT,
+            type: DataTypes.TEXT
         },
         created_at: {
             type: DataTypes.DATE,
