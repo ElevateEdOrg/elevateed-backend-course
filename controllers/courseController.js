@@ -50,7 +50,7 @@ const createCourse = async (req, res) => {
     });
     return res.status(201).json({ message: "Course created successfully", data: newCourse });
   } catch (error) {
-    console.error("Error creating course:", error);
+    console.log("Error creating course:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -79,7 +79,7 @@ const updateCourse = async (req, res) => {
 
     res.status(201).json({ message: "Course updated successfully", data: course });
   } catch (error) {
-    console.error("Error updating course:", error);
+    console.log("Error updating course:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -149,7 +149,7 @@ const getAllCourses = async (req, res) => {
     });
     res.status(200).json({ data: courses });
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.log("Error fetching courses:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -165,7 +165,14 @@ const getAllUsersCourses = async (req, res) => {
           {
             model: db.Course,
             as: "courses",
-            attributes: { exclude: ["instructor_id"] }, // Remove duplicate instructor_id from response
+            attributes: { exclude: ["instructor_id", "category_id"] }, // Remove duplicate instructor_id from response
+            include: [
+              {
+                model: db.Category,
+                as: "Category",
+                attributes: ["id", "name"], // Fetch category details
+              },
+            ],
             order: [["updated_at", "DESC"]],
           }
         ],
@@ -183,10 +190,31 @@ const getAllUsersCourses = async (req, res) => {
             as: "EnrolledCourses",
             attributes: { exclude: ["instructor_id"] }, // Remove instructor_id from response
             through: { attributes: ["progress"] }, // Fetch progress from Enrollment table
-          }
+            include: [
+              {
+                model: db.Category,
+                as: "Category",
+                attributes: ["id", "name"], // Fetch category details
+              },
+              {
+                model: db.User,
+                as: "Instructor",
+                attributes: ["id", "full_name", "email"], // Fetch instructor details
+              },
+            ],
+          },
         ],
-        as: "EnrolledCourses",
-        order: [[sequelize.literal(`(SELECT progress FROM "enrollments" WHERE "enrollments"."user_id" = '${req.user.id}' AND "enrollments"."course_id" = "EnrolledCourses"."id")`), "DESC"]]
+        order: [
+          [
+            sequelize.literal(`(
+              SELECT progress 
+              FROM "enrollments" 
+              WHERE "enrollments"."user_id" = '${req.user.id}' 
+              AND "enrollments"."course_id" = "EnrolledCourses"."id"
+            )`),
+            "DESC"
+          ]
+        ],
       });
       if (!studentdata) return res.status(403).json({ message: "Student has no record" })
       res.status(200).json({ data: studentdata })
@@ -194,7 +222,7 @@ const getAllUsersCourses = async (req, res) => {
 
 
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.log("Error fetching courses:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -268,6 +296,7 @@ const getTopInstuctors = async (req, res) => {
         "id",
         "full_name",
         "email",
+        "avatar",
         [
           sequelize.literal(
             `(SELECT COUNT(*) FROM "enrollments" 
@@ -276,10 +305,16 @@ const getTopInstuctors = async (req, res) => {
           ),
           "total_enrollments",
         ],
+        [
+          sequelize.literal(
+            `(SELECT COUNT(*) FROM "courses" WHERE "courses"."instructor_id" = "User"."id")`
+          ),
+          "total_courses",
+        ],
       ],
       where: { role: "instructor" }, // Optional: Filter only instructors
       order: [[sequelize.literal("total_enrollments"), "DESC"]],
-      limit: 10, // Get top 10 instructors
+      limit: 4, // Get top  instructors
     });
 
     res.status(200).json({ data: topInstructors })
@@ -294,6 +329,63 @@ const getTopInstuctors = async (req, res) => {
 
 
 
+const getCourseBYId = async (req, res) => {
 
+  try {
+    const courseId = req.params.courseId;
+    console.log("id", courseId);
+    if (!courseId) {
+      return res.status(403).json({ message: "empty query params" });
+    }
+    const course = await db.Course.findByPk(courseId, {
+      include: [
+        {
+          model: db.Category,
+          as: "Category",
+          attributes: ["id", "name"], // Fetch category details
+        },
+        {
+          model: db.User,
+          as: "Instructor",
+          attributes: ["id", "full_name", "email"], // Fetch instructor details
+        },
+      ],
+      attributes: {
+        include: [
+          // Count total enrolled students
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) 
+              FROM "enrollments" AS "Enrollment"
+              WHERE "Enrollment"."course_id" = "Course"."id"
+            )`),
+            "total_students",
+          ],
+          // Calculate average course rating
+          [
+            sequelize.literal(`(
+              SELECT COALESCE(AVG("Enrollment"."course_rating"), 0) 
+              FROM "enrollments" AS "Enrollment"
+              WHERE "Enrollment"."course_id" = "Course"."id"
+            )`),
+            "avg_rating",
+          ],
+        ],
+        exclude: ["category_id", "instructor_id"],
+      },
+    });
+    if (!course) {
+      return res.status(403).json({ message: "Course not found" });
+    }
+    res.status(200).json({ data: course });
+  } catch (error) {
+    console.log("Error fetching course:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 
-module.exports = { createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles, updateCourse, searchCourses, getTopInstuctors };
+}
+
+module.exports = {
+  createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles, updateCourse, searchCourses, getTopInstuctors,
+  getCourseBYId
+};

@@ -5,11 +5,15 @@ const { upload } = require('../config/multer/multer')
 const asyncHandler = require("express-async-handler");
 const { authenticate } = require('../utils/utils');
 
-const { createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles ,searchCourses,getTopInstuctors} = require('../controllers/courseController')
+const { createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles ,searchCourses,getTopInstuctors,
+    getCourseBYId
+} = require('../controllers/courseController')
 
 const courseRouter = express.Router();
 
 courseRouter.get('/getcourses', asyncHandler(getAllCourses))
+
+courseRouter.get('/getcourses/:courseId', asyncHandler(getCourseBYId))
 
 courseRouter.get('/searchcourse', asyncHandler(searchCourses))
 

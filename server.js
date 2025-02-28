@@ -9,6 +9,10 @@ const loginRouter = require('./routes/loginRouter')
 const courseRouter = require('./routes/courseRouter')
 const categoryRouter = require('./routes/categoryRouter')
 const lectureRouter = require('./routes/LectureRouter')
+const paymentRouter = require('./routes/paymentRouter')
+const {handleStripeWebhook} = require('./controllers/paymentController');
+const asyncHandler = require("express-async-handler");
+
 const cors = require("cors");
 
 const PORT = process.env.PORT || 8000;
@@ -36,18 +40,44 @@ app.all("*", (req, res, next) => {
   next();
 });
 app.use(cors());
+
+app.post('/api/courses/webhook', express.raw({type: 'application/json'}),asyncHandler(handleStripeWebhook));
+
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 app.use('/', require('./routes/rootRouter'))
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 
+//stripe weebhok
+
+
+
+app.get("/payment/success", (req, res) => {
+  console.log("from success");
+  res.sendFile(path.join(__dirname, "views", "success.html"));
+});
+
+app.get("/payment/cancel", (req, res) => {
+  console.log("from success");
+  res.sendFile(path.join(__dirname, "views", "cancel.html"));
+});
 
 app.use('/api/login', loginRouter);
 
 app.use('/api/courses', courseRouter);
 app.use('/api/courses/lectures', lectureRouter);
 app.use('/api/courses/categories', categoryRouter);
+app.use('/api/courses/payment', paymentRouter);
+
+
+
+
+
+
+
+
 
 app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {

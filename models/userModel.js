@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
         isIn: [['student', 'instructor', 'admin']]
       }
     },
+    avatar: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

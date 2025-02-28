@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Processing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+        }
+
+        .icon {
+            font-size: 60px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        p {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: #d9534f;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            text-decoration: none;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Payment Processing!</h1>
+        <p>Do not refresh or change the tab.</p>
+        <p>Your payment has been made successfully. You will be redirected to the home page soon...</p>
+        <p class="timer">Redirecting in <span id="countdown">60</span> seconds...</p>
+    </div>
+
+</body>
+
+<script type="text/javascript">
+    let timeLeft = 60; // 60 seconds countdown
+    const countdownElement = document.getElementById("countdown");
+
+    const countdownTimer = setInterval(() => {
+        timeLeft--;
+        countdownElement.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(countdownTimer);
+            window.location.href = "http://192.168.10.65:5173/profile"; // Change this URL to your home page
+        }
+    }, 1000);
+</script>
+
+</html>
