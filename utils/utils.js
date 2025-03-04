@@ -32,4 +32,9 @@ function authenticate(allowedRoles = []) {
   };
 }
 
-module.exports = { authenticate };
+
+// Utility function to get random questions
+const getRandomQuestions = (questions, count) => {
+  return questions.sort(() => 0.5 - Math.random()).slice(0, count);
+};
+module.exports = { authenticate ,getRandomQuestions};

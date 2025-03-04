@@ -68,16 +68,15 @@
 <body>
 
     <div class="container">
-        <h1>Payment Processing!</h1>
-        <p>Do not refresh or change the tab.</p>
+        <h1>Payment Sucessful ✅</h1>
         <p>Your payment has been made successfully. You will be redirected to the home page soon...</p>
-        <p class="timer">Redirecting in <span id="countdown">60</span> seconds...</p>
+        <p class="timer">Redirecting in <span id="countdown">4</span> seconds...</p>
     </div>
 
 </body>
 
 <script type="text/javascript">
-    let timeLeft = 60; // 60 seconds countdown
+    let timeLeft = 4; // 4 seconds countdown
     const countdownElement = document.getElementById("countdown");
 
     const countdownTimer = setInterval(() => {
@@ -85,7 +84,7 @@
         countdownElement.textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(countdownTimer);
-            window.location.href = "http://192.168.10.65:5173/profile"; // Change this URL to your home page
+            window.location.href = "http://192.168.10.65:5173/"; // Change this URL to your home page
         }
     }, 1000);
 </script>

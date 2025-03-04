@@ -10,7 +10,8 @@ const courseRouter = require('./routes/courseRouter')
 const categoryRouter = require('./routes/categoryRouter')
 const lectureRouter = require('./routes/LectureRouter')
 const paymentRouter = require('./routes/paymentRouter')
-const {handleStripeWebhook} = require('./controllers/paymentController');
+const aiserviceRouter= require('./routes/aiserviceRouter')
+const { handleStripeWebhook } = require('./controllers/paymentController');
 const asyncHandler = require("express-async-handler");
 
 const cors = require("cors");
@@ -41,7 +42,7 @@ app.all("*", (req, res, next) => {
 });
 app.use(cors());
 
-app.post('/api/courses/webhook', express.raw({type: 'application/json'}),asyncHandler(handleStripeWebhook));
+app.post('/api/courses/webhook', express.raw({ type: 'application/json' }), asyncHandler(handleStripeWebhook));
 
 app.use(express.json());
 
@@ -54,12 +55,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 
 
 
-app.get("/payment/success", (req, res) => {
+app.get("/api/courses/payment/success", (req, res) => {
   console.log("from success");
   res.sendFile(path.join(__dirname, "views", "success.html"));
 });
 
-app.get("/payment/cancel", (req, res) => {
+app.get("/api/courses/payment/cancel", (req, res) => {
   console.log("from success");
   res.sendFile(path.join(__dirname, "views", "cancel.html"));
 });
@@ -71,9 +72,7 @@ app.use('/api/courses/lectures', lectureRouter);
 app.use('/api/courses/categories', categoryRouter);
 app.use('/api/courses/payment', paymentRouter);
 
-
-
-
+app.use('/api/courses/ai', aiserviceRouter);
 
 
 

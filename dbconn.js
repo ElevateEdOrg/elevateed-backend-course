@@ -6,6 +6,12 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialect: 'postgres',
   port: process.env.DB_PORT,
   logging: false,             // set to true to see SQL queries logged in console
+  // dialectOptions: {
+  //   ssl: {
+  //     require: false,
+  //     rejectUnauthorized: false, // ⚠️ This makes the connection less secure
+  //   },
+  // },
   pool: {
     max: 5,                   // maximum number of connections in pool
     min: 0,                   // minimum number of connections in pool
@@ -23,7 +29,7 @@ db.Payment = require('./models/payementModel')(sequelize, DataTypes);
 db.Lecture = require('./models/lectureModel')(sequelize, DataTypes);
 db.Category = require('./models/categoryModel')(sequelize, DataTypes);
 db.LectureStatus = require('./models/lectureStatusModel')(sequelize, DataTypes);
-
+db.Assessment = require('./models/assesmentModel')(sequelize, DataTypes);
 // Call associate methods after defining all models
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {

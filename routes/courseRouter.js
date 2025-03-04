@@ -6,7 +6,7 @@ const asyncHandler = require("express-async-handler");
 const { authenticate } = require('../utils/utils');
 
 const { createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles ,searchCourses,getTopInstuctors,
-    getCourseBYId
+    getCourseBYId,courseContentDetails,updateCourse,deleteCourse
 } = require('../controllers/courseController')
 
 const courseRouter = express.Router();
@@ -17,11 +17,17 @@ courseRouter.get('/getcourses/:courseId', asyncHandler(getCourseBYId))
 
 courseRouter.get('/searchcourse', asyncHandler(searchCourses))
 
-courseRouter.get('/topinstructors', asyncHandler(getTopInstuctors))
+courseRouter.get('/topinstructors', asyncHandler(getTopInstuctors));
+
+courseRouter.get('/content/:courseId',authenticate(["instructor", "student"]),asyncHandler(courseContentDetails));
 
 courseRouter.post('/getcourses', authenticate(["instructor", "student"]), asyncHandler(getAllUsersCourses))
 
 courseRouter.post('/createcourse', authenticate(["instructor"]), asyncHandler(createCourse));
+
+courseRouter.put('/update/:courseId',authenticate(["instructor"]), asyncHandler(updateCourse));
+
+courseRouter.delete('/delete/:courseId',authenticate(["instructor"]), asyncHandler(deleteCourse));
 
 courseRouter.post('/upload', authenticate(['instructor']), upload.fields([
     { name: "banner_image", maxCount: 1 }, // Single banner image

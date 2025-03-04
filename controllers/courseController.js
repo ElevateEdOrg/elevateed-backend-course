@@ -60,24 +60,22 @@ const createCourse = async (req, res) => {
 const updateCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
+    const instructorId = req.user.id; // Instructor ID from authenticated user
     const { title, description, price, category_id, banner_image, welcome_msg, intro_video } = req.body;
 
-    const course = await db.Course.findByPk(courseId);
-    if (!course) {
-      return res.status(403).json({ message: "Course not found" });
-    }
+    if (!title || !description || !price || !category_id || !banner_image || !welcome_msg || !intro_video || !courseId) return res.status(403).json({ message: "missing fields" });
 
-    await course.update({
-      title,
-      description,
-      price,
-      category_id,
-      banner_image,
-      welcome_msg,
-      intro_video,
+    const course = await db.Course.findOne({
+      where: { id: courseId, instructor_id: instructorId },
     });
 
-    res.status(201).json({ message: "Course updated successfully", data: course });
+    if (!course) {
+      return res.status(403).json({ message: "Unauthorized or course not found" });
+    }
+
+    await course.update({ title, description, price, category_id, banner_image, welcome_msg, intro_video });
+
+    res.status(200).json({ message: "Course updated successfully", data: course });
   } catch (error) {
     console.log("Error updating course:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -85,17 +83,33 @@ const updateCourse = async (req, res) => {
 };
 
 
+
 // delete courses 
 
 const deleteCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
+    const instructorId = req.user.id;
 
-    const course = await db.Course.findByPk(courseId);
+    if (!courseId) res.status(403).json({ message: "missing fields" });
+
+    // Step 1: Find the course (Only allow if instructor matches)
+    const course = await db.Course.findOne({
+      where: { id: courseId, instructor_id: instructorId },
+    });
+
     if (!course) {
-      return res.status(403).json({ message: "Course not found" });
+      return res.status(403).json({ message: "Unauthorized or course not found" });
     }
 
+    // Step 2: Check if the course has enrollments
+    const enrollmentCount = await db.Enrollment.count({ where: { course_id: courseId } });
+
+    if (enrollmentCount > 0) {
+      return res.status(403).json({ message: "Course cannot be deleted as it has enrollments." });
+    }
+
+    // Step 3: Delete the course
     await course.destroy();
     res.status(200).json({ message: "Course deleted successfully" });
   } catch (error) {
@@ -103,6 +117,7 @@ const deleteCourse = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 
 
@@ -385,7 +400,103 @@ const getCourseBYId = async (req, res) => {
 
 }
 
+const courseContentDetails = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const courseId = req.params.courseId;
+    if (!courseId) {
+      return res.status(403).json({ message: "Empty query params" });
+    }
+
+    if (req.user.role === "student") {
+      //  Check if student is enrolled in the course
+      const enrollment = await db.Enrollment.findOne({
+        where: { user_id: userId, course_id: courseId },
+        attributes: ["progress", "course_rating"],
+      });
+
+      if (!enrollment) {
+        return res.status(403).json({ error: "You are not enrolled in this course." });
+      }
+
+      //  Fetch course details along with lectures
+      const course = await db.Course.findOne({
+        where: { id: courseId },
+        attributes: ["id", "title", "description", "price", "banner_image", "welcome_msg", "intro_video"],
+        include: [
+          {
+            model: db.Lecture,
+            as: "Lectures",
+            attributes: ["id", "title", "description", "video_path", "pdf_path"],
+            order: [['createdAt', 'ASC']]
+          },
+          {
+            model: db.User,
+            as: "Instructor",
+            attributes: ["id", "full_name", "email"],
+          },
+        ],
+      });
+
+      if (!course) {
+        return res.status(403).json({ error: "Course not found." });
+      }
+
+      return res.status(200).json({
+        data: {
+          course,
+          userProgress: enrollment.progress,
+          userRating: enrollment.course_rating,
+        }
+      });
+    }
+
+    //  Instructor View: Fetch course details, total students, and average rating
+    if (req.user.role === "instructor") {
+      const course = await db.Course.findOne({
+        where: { id: courseId, instructor_id: userId },
+        attributes: ["id", "title", "description", "price", "banner_image", "welcome_msg", "intro_video"],
+        include: [
+          {
+            model: db.Lecture,
+            as: "Lectures",
+            attributes: ["id", "title", "description", "video_path", "pdf_path"],
+          },
+        ],
+      });
+
+      if (!course) {
+        return res.status(403).json({ message: "Course not found or you do not have access." });
+      }
+
+      // Get total enrolled students and average course rating
+      const courseStats = await db.Enrollment.findOne({
+        where: { course_id: courseId },
+        attributes: [
+          [sequelize.fn("COUNT", sequelize.col("user_id")), "total_students"],
+          [sequelize.fn("AVG", sequelize.col("course_rating")), "avg_rating"],
+        ],
+        raw: true,
+      });
+
+      return res.status(200).json({
+        data: {
+          course,
+          totalStudents: courseStats.total_students || 0,
+          averageRating: courseStats.avg_rating ? parseFloat(courseStats.avg_rating).toFixed(2) : "0.00",
+        }
+      });
+    }
+
+    return res.status(403).json({ message: "invalid role" });
+  } catch (error) {
+    console.log("Error fetching course content:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+
+};
+
 module.exports = {
   createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles, updateCourse, searchCourses, getTopInstuctors,
-  getCourseBYId
+  getCourseBYId, courseContentDetails, deleteCourse
 };

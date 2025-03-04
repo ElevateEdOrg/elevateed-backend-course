@@ -8,25 +8,43 @@ const createPaymentSession = async (req, res) => {
     try {
         const { courseIds } = req.body;
 
-        if (!courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+        // Remove duplicate course IDs
+        const uniqueCourseIds = [...new Set(courseIds)];
+
+        if (!uniqueCourseIds || uniqueCourseIds.length === 0) {
             return res.status(403).json({ success: false, message: "Cart is empty" });
         }
 
         // Fetch course details from the database
         const courses = await db.Course.findAll({
-            where: { id: courseIds },
+            where: { id: uniqueCourseIds },
             attributes: ["id", "title", "price", "banner_image"],
         });
 
         const foundCourseIds = courses.map(course => course.id);
-        const invalidCourseIds = courseIds.filter(id => !foundCourseIds.includes(id));
+        const invalidCourseIds = uniqueCourseIds.filter(id => !foundCourseIds.includes(id));
 
         if (invalidCourseIds.length > 0) {
             return res.status(403).json({ success: false, message: "Invalid course found" });
         }
 
+        // Check if the user has already paid for any of the courses
+        const paidCourses = await db.Payment.findAll({
+            where: { user_id: req.user.id, course_id: uniqueCourseIds, status: 'completed' },
+            attributes: ["course_id"]
+        });
+
+        const paidCourseIds = paidCourses.map(payment => payment.course_id);
+
+        // Filter out courses that the user has already paid for
+        const filteredCourses = courses.filter(course => !paidCourseIds.includes(course.id));
+
+        if (filteredCourses.length === 0) {
+            return res.status(403).json({ success: false, message: "You have already purchased all selected courses." });
+        }
+
         // Prepare line items for Stripe checkout
-        const lineItems = courses.map(course => ({
+        const lineItems = filteredCourses.map(course => ({
             price_data: {
                 currency: "inr",
                 product_data: {
@@ -41,11 +59,11 @@ const createPaymentSession = async (req, res) => {
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
             client_reference_id: req.user.id,
-            metadata: { course_ids: JSON.stringify(courseIds), user_id: req.user.id },
+            metadata: { course_ids: JSON.stringify(uniqueCourseIds), user_id: req.user.id },
             line_items: lineItems,
             mode: "payment",
-            success_url: `${process.env.CLIENT_URL}/success`, // Not used, webhook handles success
-            cancel_url: `${process.env.CLIENT_URL}/cancel`, // Not used, webhook handles failure
+            success_url: `${process.env.CLIENT_URL}/success`,
+            cancel_url: `${process.env.CLIENT_URL}/cancel`,
         });
 
         res.status(200).json({ success: true, data: session.url });
@@ -56,12 +74,14 @@ const createPaymentSession = async (req, res) => {
     }
 };
 
+
+
 const handleStripeWebhook = async (req, res) => {
     const sig = req.headers["stripe-signature"];
     console.log('signature', sig, "secret", process.env.STRIPE_WEBHOOK_SECRET, "raw body", req.body);
     if (!sig) {
         console.log("invalid stripe signature");
-        return res.status(400);
+        return res.status(400).json({message: "invalid stripe signature"});
     }
 
     // let event;
@@ -89,7 +109,7 @@ const handleStripeWebhook = async (req, res) => {
             return res.status(400);
         }
     }
-    console.log("event", event);
+    // console.log("event", event);
     try {
         if (event.type === "checkout.session.completed") {
             const session = event.data.object;
