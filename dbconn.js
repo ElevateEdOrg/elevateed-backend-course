@@ -6,12 +6,12 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialect: 'postgres',
   port: process.env.DB_PORT,
   logging: false,             // set to true to see SQL queries logged in console
-  // dialectOptions: {
-  //   ssl: {
-  //     require: false,
-  //     rejectUnauthorized: false, // ⚠️ This makes the connection less secure
-  //   },
-  // },
+  dialectOptions: {
+    ssl: {
+      require: false,
+      rejectUnauthorized: false, //  This makes the connection less secure
+    },
+  },
   pool: {
     max: 5,                   // maximum number of connections in pool
     min: 0,                   // minimum number of connections in pool

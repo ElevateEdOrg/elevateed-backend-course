@@ -13,7 +13,7 @@ const aiserviceRouter = express.Router();
 
 // courseRouter.post('/getcourses', authenticate(["instructor", "student"]), asyncHandler(getAllUsersCourses))
 
-aiserviceRouter.get('/getquiz/:courseId', authenticate(["student"]), asyncHandler(getQuizData));
+aiserviceRouter.get('/getquiz', authenticate(["student"]), asyncHandler(getQuizData));
 
 aiserviceRouter.put('/updatescore/:courseId', authenticate(["student"]), asyncHandler(updateScore));
 

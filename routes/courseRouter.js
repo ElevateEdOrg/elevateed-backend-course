@@ -6,7 +6,7 @@ const asyncHandler = require("express-async-handler");
 const { authenticate } = require('../utils/utils');
 
 const { createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles ,searchCourses,getTopInstuctors,
-    getCourseBYId,courseContentDetails,updateCourse,deleteCourse
+    getCourseBYId,courseContentDetails,updateCourse,deleteCourse,updateCourserating
 } = require('../controllers/courseController')
 
 const courseRouter = express.Router();
@@ -26,6 +26,8 @@ courseRouter.post('/getcourses', authenticate(["instructor", "student"]), asyncH
 courseRouter.post('/createcourse', authenticate(["instructor"]), asyncHandler(createCourse));
 
 courseRouter.put('/update/:courseId',authenticate(["instructor"]), asyncHandler(updateCourse));
+
+courseRouter.put('/updatecourserating',authenticate(["student"]), asyncHandler(updateCourserating));
 
 courseRouter.delete('/delete/:courseId',authenticate(["instructor"]), asyncHandler(deleteCourse));
 

@@ -496,7 +496,57 @@ const courseContentDetails = async (req, res) => {
 
 };
 
+
+const updateCourserating = async (req, res) => {
+  try {
+    const { course_id, rating } = req.body;
+    const user_id = req.user.id; // Assuming authenticated user
+
+    // Validate input
+    if (!course_id || !(rating>=0 && rating <=5) ) {
+      return res.status(400).json({ message: "Missing course_id or rating" });
+    }
+
+    // Ensure rating is a float between 0 and 5 (up to 2 decimal places)
+    const parsedRating = parseFloat(rating.toFixed(2));
+    if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+      return res.status(403).json({ message: "Invalid rating. Must be a float between 0 and 5." });
+    }
+
+    // Check if the user is enrolled in the course
+    const enrollment = await db.Enrollment.findOne({
+      where: { user_id, course_id }
+    });
+
+    if (!enrollment) {
+      return res.status(403).json({ message: "You must be enrolled to rate this course." });
+    }
+
+    // Update the user's rating in the enrollments table
+    await db.Enrollment.update(
+      { rating: parsedRating },
+      { where: { user_id, course_id } }
+    );
+
+    // Calculate the new average rating for the course
+    const avgRating = await db.Enrollment.findOne({
+      where: { course_id },
+      attributes: [[sequelize.fn("AVG",sequelize.col("course_rating")), "average_rating"]],
+      raw: true
+    });
+
+    return res.status(200).json({
+      message: "Rating updated successfully",
+      courseAvgrating:parseFloat(avgRating.average_rating,10)
+    });
+
+  } catch (error) {
+    console.error("Error updating course rating:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   createCourse, getAllCourses, getAllUsersCourses, uploadCourseFiles, updateCourse, searchCourses, getTopInstuctors,
-  getCourseBYId, courseContentDetails, deleteCourse
+  getCourseBYId, courseContentDetails, deleteCourse,updateCourserating
 };

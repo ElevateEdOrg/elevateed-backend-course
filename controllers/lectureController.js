@@ -1,5 +1,6 @@
 const { db } = require('../dbconn');
 const { uploadFileToS3 } = require('../config/awss3/s3Config')
+const axios = require('axios');
 require('dotenv').config();
 
 
@@ -31,7 +32,7 @@ const createLecture = async (req, res) => {
 
     // Validate input
     if (!course_id || !title || !description || !video_path) {
-      return res.status(403).json({ message: "missing fields" });
+      return res.status(403).json({ message: "Missing fields" });
     }
 
     // Check if the course exists
@@ -49,25 +50,37 @@ const createLecture = async (req, res) => {
       pdf_path: req.pdf_path ? req.pdf_path : null,
     });
 
-    // Step 2: Call the AI service to generate a quiz
-    // const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}​/quiz​/generate_quiz_for_course=course_id=${course_id}​`; // Replace with actual AI service URL
+    // // Call the AI service to generate a quiz (but don't block execution)
+    // try {
+    //   const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}/quiz/generate_quiz_for_lecture`; // Replace with actual AI service URL
+    //   const requestBody = {
+    //     course_id,
+    //     lecture_id: newLecture.id,
+    //     video_path: newLecture.video_path,
+    //   };
+    //      console.log("request",requestBody)
+    //   const aiResponse = await axios.post(aiServiceUrl, requestBody);
+    //   console.log("AI response:", aiResponse.data);
 
-  
-
-    // const aiResponse = await axios.post(aiServiceUrl);
-    // console.log("ai response",aiResponse)
-
-    // if (!aiResponse.data.success) {
-    //   throw new Error('ai service failed')
-    //   // return res.status(500).json({ message: "Quiz generation failed" });
+    //   if (!aiResponse.data.success) {
+    //     console.error("AI service failed to generate a quiz.");
+    //   }
+    // } catch (aiError) {
+    //   console.error("Error calling AI service:", aiError.message);
     // }
 
-    res.status(201).json({ message: "Lecture created successfully.", data: newLecture });
+    // Return the created lecture even if AI service failed
+    res.status(201).json({
+      message: "Lecture created successfully.",
+      data: newLecture,
+    });
+
   } catch (error) {
     console.error("Error creating lecture:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 };
+
 
 
 
@@ -190,11 +203,12 @@ const updatelectureStatus = async (req, res) => {
     const totalLectures = await db.Lecture.count({ where: { course_id } });
     const completedLectures = await db.LectureStatus.count({ where: { user_id, status: "completed" } });
 
-    const progress = totalLectures > 0 ? (completedLectures / totalLectures) * 100 : 0;
+    const progress = totalLectures > 0 ? Math.min((completedLectures / totalLectures) * 100, 100) : 0;
 
-    //  Step 5: Update Enrollment Progress
+
+    // Update Enrollment Progress
     await db.Enrollment.update(
-      { progress: progress.toFixed(2) },
+      { progress: progress.toFixed(2) }, // Ensures max progress is 100
       { where: { user_id, course_id } }
     );
 
