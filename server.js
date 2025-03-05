@@ -96,7 +96,7 @@ sequelize.sync()
   .then(() => {
 
     console.log(`postgres connected successfully`)
-    app.listen(PORT, (err) => {
+    app.listen(PORT,"0.0.0.0", (err) => {
       err
         ? console.log(err)
         : console.log("server running " + ` http://localhost:` + PORT + "/");
