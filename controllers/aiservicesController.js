@@ -1,7 +1,9 @@
 const { db } = require("../dbconn");
-const { getRandomQuestions ,quizData} = require('../utils/utils')
+const { getRandomQuestions, quizData } = require('../utils/utils')
 const axios = require('axios')
 const { Op } = require("sequelize");
+
+
 const getQuizData = async (req, res) => {
     try {
         // const { courseId } = req.params;
@@ -89,6 +91,14 @@ const updateScore = async (req, res) => {
 };
 
 const getCourseRecommendations = async (req, res) => {
+    // Function to provide fallback recommendations
+    const getFallbackRecommendations = async () => {
+        return await db.Course.findAll({
+            order: [["created_at", "DESC"]], // Latest courses as fallback
+            limit: 5, // Fetch top 5 latest courses
+            attributes: ["id"],
+        }).then((courses) => courses.map(course => course.id));
+    };
     try {
         const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}/recommendation/recommendations?user_id=${req.user.id}`;
 
@@ -137,12 +147,5 @@ const getCourseRecommendations = async (req, res) => {
     }
 };
 
-// Function to provide fallback recommendations
-const getFallbackRecommendations = async () => {
-    return await db.Course.findAll({
-        order: [["created_at", "DESC"]], // Latest courses as fallback
-        limit: 5, // Fetch top 5 latest courses
-        attributes: ["id"],
-    }).then((courses) => courses.map(course => course.id));
-};
+
 module.exports = { getQuizData, updateScore, getCourseRecommendations };
