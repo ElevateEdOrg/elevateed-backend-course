@@ -90,7 +90,6 @@ const updateScore = async (req, res) => {
     }
 };
 
-const axios = require("axios");
 
 const getCourseRecommendations = async (req, res) => {
     // Function to provide fallback recommendations
