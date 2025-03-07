@@ -90,6 +90,8 @@ const updateScore = async (req, res) => {
     }
 };
 
+const axios = require("axios");
+
 const getCourseRecommendations = async (req, res) => {
     // Function to provide fallback recommendations
     const getFallbackRecommendations = async () => {
@@ -99,24 +101,27 @@ const getCourseRecommendations = async (req, res) => {
             attributes: ["id"],
         }).then((courses) => courses.map(course => course.id));
     };
+
     try {
         const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}/recommendation/recommendations?user_id=${req.user.id}`;
 
         let recommendations = []; // Store AI recommendations
 
-        try {
-            // Step 2: Call the AI service for recommendations
-            const aiResponse = await axios.get(aiServiceUrl);
-
-            if (aiResponse.status === 200 && aiResponse.data.recommendations?.length > 0) {
-                console.log(aiResponse.data.recommendations);
-                recommendations = aiResponse.data.recommendations;
+        // Function to fetch AI recommendations with a timeout
+        const fetchAIRecommendations = async () => {
+            try {
+                const aiResponse = await axios.get(aiServiceUrl, { timeout: 3000 }); // 3s timeout
+                if (aiResponse.status === 200 && aiResponse.data.recommendations?.length > 0) {
+                    return aiResponse.data.recommendations;
+                }
+            } catch (error) {
+                console.warn("AI Service failed or timed out, falling back to default recommendations.");
             }
-        } catch (aiError) {
-            console.warn("AI Service failed, falling back to default recommendations.");
-        }
+            return [];
+        };
 
-        // If AI recommendations are empty or service failed, use fallback recommendations
+        // Try AI recommendations with timeout, otherwise fallback
+        recommendations = await fetchAIRecommendations();
         if (recommendations.length === 0) {
             recommendations = await getFallbackRecommendations();
         }
@@ -146,6 +151,7 @@ const getCourseRecommendations = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
 
 
 module.exports = { getQuizData, updateScore, getCourseRecommendations };
