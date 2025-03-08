@@ -70,7 +70,7 @@ const createLecture = async (req, res) => {
 
         const aiResponse = await axios.post(aiServiceUrl, requestBody);
 
-        if (!aiResponse.ok) {
+        if (!aiResponse.data.status=="success") {
           console.error("AI service failed to generate a quiz.");
         } else {
           console.log("AI quiz generation successful:", aiResponse.data.message);
@@ -154,7 +154,7 @@ const updateLecture = async (req, res) => {
 
         const aiResponse = await axios.post(aiServiceUrl, requestBody);
 
-        if (!aiResponse.ok) {
+        if (!aiResponse.data.status=="success") {
           console.error("AI service failed to generate a quiz.");
         } else {
           console.log("AI quiz generation successful:", aiResponse.data.message);
