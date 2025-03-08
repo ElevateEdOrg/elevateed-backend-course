@@ -40,4 +40,4 @@ function getRandomQuestions(questions, count) {
 }
 
 
-module.exports = { authenticate, getRandomQuestions,quizData };
+module.exports = { authenticate, getRandomQuestions};
