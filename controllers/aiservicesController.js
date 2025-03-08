@@ -1,53 +1,58 @@
 const { db } = require("../dbconn");
-const { getRandomQuestions, quizData } = require('../utils/utils')
+const { getRandomQuestions } = require('../utils/utils')
 const axios = require('axios')
 const { Op } = require("sequelize");
 
-
 const getQuizData = async (req, res) => {
     try {
-        // const { courseId } = req.params;
-        // const userId = req.user.id; // Assuming user info is available in req.user
+        const { courseId } = req.params;
+        const userId = req.user.id;
 
-        // if (!courseId) {
-        //     return res.status(403).json({ message: "course not found" });
-        // }
+        if (!courseId) {
+            return res.status(403).json({ message: "Course not found" });
+        }
 
-        // // Check if the student is enrolled in the course
-        // const enrollment = await db.Enrollment.findOne({
-        //     where: { course_id: courseId, user_id: userId },
-        // });
+        // Check if the student is enrolled in the course
+        const enrollment = await db.Enrollment.findOne({
+            where: { course_id: courseId, user_id: userId },
+        });
 
-        // if (!enrollment) {
-        //     return res.status(403).json({ message: "Access denied. Enrollment required." });
-        // }
+        if (!enrollment) {
+            return res.status(403).json({ message: "Access denied. Enrollment required." });
+        }
 
-        // // Fetch all assessments for the given course
-        // const assessments = await db.Assessment.findAll({
-        //     where: { course_id: courseId },
-        //     attributes: ["assessment_data"],
-        // });
+        // Fetch all assessments for the given course
+        const assessments = await db.Assessment.findAll({
+            where: { course_id: courseId },
+            attributes: ["assessment_data"],
+        });
 
-        // if (!assessments.length) {
-        //     return res.status(404).json({ message: "No quizzes found for this course." });
-        // }
+        if (!assessments.length) {
+            return res.status(403).json({ message: "No quiz found for this course." });
+        }
 
-        // // Combine all quiz questions
-        // let allQuestions = [];
-        // assessments.forEach((assessment) => {
-        //     allQuestions = allQuestions.concat(assessment.assessment_data.questions);
-        // });
+        // Combine all quiz questions from assessment_data
+        let allQuestions = [];
+        assessments.forEach((assessment) => {
+            const assessmentData = assessment.assessment_data;
+            if (assessmentData && Array.isArray(assessmentData)) {
+                allQuestions = allQuestions.concat(assessmentData);
+            }
+        });
 
-        // // Select 10 random quiz questions (or return all if less than 10)
-        // const selectedQuestions = getRandomQuestions(allQuestions, Math.min(10, allQuestions.length));
+        if (allQuestions.length === 0) {
+            return res.status(403).json({ message: "No quiz questions available." });
+        }
 
-        res.status(200).json({ data: quizData });
+        // Select 10 random quiz questions (or return all if less than 10)
+        const selectedQuestions = getRandomQuestions(allQuestions, Math.min(10, allQuestions.length));
+
+        res.status(200).json({ data: selectedQuestions });
     } catch (error) {
         console.log("Error fetching quiz:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
-
 
 const updateScore = async (req, res) => {
     try {

@@ -50,30 +50,35 @@ const createLecture = async (req, res) => {
       pdf_path: req.pdf_path ? req.pdf_path : null,
     });
 
-    // // Call the AI service to generate a quiz (but don't block execution)
-    // try {
-    //   const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}/quiz/generate_quiz_for_lecture`; // Replace with actual AI service URL
-    //   const requestBody = {
-    //     course_id,
-    //     lecture_id: newLecture.id,
-    //     video_path: newLecture.video_path,
-    //   };
-    //      console.log("request",requestBody)
-    //   const aiResponse = await axios.post(aiServiceUrl, requestBody);
-    //   console.log("AI response:", aiResponse.data);
-
-    //   if (!aiResponse.data.success) {
-    //     console.error("AI service failed to generate a quiz.");
-    //   }
-    // } catch (aiError) {
-    //   console.error("Error calling AI service:", aiError.message);
-    // }
-
-    // Return the created lecture even if AI service failed
+    // Send success response immediately to the frontend
     res.status(201).json({
       message: "Lecture created successfully.",
       data: newLecture,
     });
+
+    // Call the AI service to generate a quiz (asynchronously)
+    (async () => {
+      try {
+        const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}/quiz/generate_quiz_for_lecture`;
+        const requestBody = {
+          course_id,
+          lecture_id: newLecture.id,
+          video_path: newLecture.video_path,
+        };
+
+        console.log("Sending request to AI service:", requestBody);
+
+        const aiResponse = await axios.post(aiServiceUrl, requestBody);
+
+        if (!aiResponse.ok) {
+          console.error("AI service failed to generate a quiz.");
+        } else {
+          console.log("AI quiz generation successful:", aiResponse.data.message);
+        }
+      } catch (aiError) {
+        console.error("Error calling AI service:", aiError.message);
+      }
+    })();
 
   } catch (error) {
     console.error("Error creating lecture:", error);
@@ -135,6 +140,29 @@ const updateLecture = async (req, res) => {
         pdf_path: lecture.pdf_path,
       }
     });
+
+    (async () => {
+      try {
+        const aiServiceUrl = `${process.env.AI_SERVICE_BASEURL}/quiz/generate_quiz_for_lecture`;
+        const requestBody = {
+          course_id,
+          video_path: lecture.video_path,
+          lecture_id: lecture.id,
+        };
+
+        console.log("Sending request to AI service:", requestBody);
+
+        const aiResponse = await axios.post(aiServiceUrl, requestBody);
+
+        if (!aiResponse.ok) {
+          console.error("AI service failed to generate a quiz.");
+        } else {
+          console.log("AI quiz generation successful:", aiResponse.data.message);
+        }
+      } catch (aiError) {
+        console.error("Error calling AI service:", aiError.message);
+      }
+    })();
   } catch (error) {
     console.log("Error updating lecture:", error);
     res.status(500).json({ message: "Internal Server Error" });
